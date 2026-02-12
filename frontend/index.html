@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Job Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial; padding: 40px; background: #f4f6f9; }
+        button { margin-right: 10px; padding: 8px 15px; }
+        input { margin-bottom: 15px; }
+        canvas { background: #fff; margin-bottom: 30px; }
+        pre { background: #111; color: #0f0; padding: 15px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+
+<h1>AI Job Dashboard</h1>
+
+<h3>Upload Job Dataset CSV</h3>
+<input type="file" id="fileInput"><br>
+
+<button onclick="upload()">Upload CSV</button>
+<button onclick="analyze()">Analyze Jobs</button>
+<button onclick="recommend()">Recommend Roles</button>
+
+<hr>
+
+<h3>Resume Matching</h3>
+<input type="file" id="resumeInput"><br>
+<button onclick="matchResume()">Match Resume</button>
+
+<hr>
+
+<h2>Charts</h2>
+<canvas id="chart1" width="400" height="200"></canvas>
+<canvas id="chart2" width="400" height="200"></canvas>
+
+<hr>
+
+<h3>Top Resume Matches</h3>
+<pre id="resumeOutput"></pre>
+
+<hr>
+
+<h3>Raw Output</h3>
+<pre id="output"></pre>
+
+<script>
+const API = "http://localhost:8000";
+
+function getFile(){ return document.getElementById("fileInput").files[0]; }
+function getResume(){ return document.getElementById("resumeInput").files[0]; }
+
+async function send(endpoint, fileObj){
+    if(!fileObj){ alert("Please select file first"); return; }
+    const formData = new FormData();
+    formData.append("file", fileObj);
+
+    try{
+        const res = await fetch(API + endpoint, {method:"POST", body: formData});
+        return await res.json();
+    }catch(err){
+        document.getElementById("output").textContent = "ERROR: Cannot connect to backend.";
+        return null;
+    }
+}
+
+async function upload(){
+    const data = await send("/upload", getFile());
+    if(data) document.getElementById("output").textContent = JSON.stringify(data,null,2);
+}
+
+async function analyze(){
+    const data = await send("/analyze", getFile());
+    if(!data || !data.job_category_counts) return;
+    document.getElementById("output").textContent = JSON.stringify(data,null,2);
+    drawChart("chart1", Object.keys(data.job_category_counts), Object.values(data.job_category_counts), "Job Categories");
+}
+
+async function recommend(){
+    const data = await send("/recommend", getFile());
+    if(!data || !data.role_counts) return;
+    document.getElementById("output").textContent = JSON.stringify(data,null,2);
+    drawChart("chart2", Object.keys(data.role_counts), Object.values(data.role_counts), "Recommended Roles");
+}
+
+async function matchResume(){
+    const resumeFile = getResume();
+    const jobsFile = getFile();
+    if(!resumeFile || !jobsFile){ alert("Select both resume and jobs CSV"); return; }
+
+    const formData = new FormData();
+    formData.append("resume", resumeFile);
+    formData.append("jobs", jobsFile);
+
+    try{
+        const res = await fetch(API + "/match", {method:"POST", body: formData});
+        const data = await res.json();
+        document.getElementById("resumeOutput").textContent = JSON.stringify(data.top_matches,null,2);
+    }catch(err){
+        document.getElementById("resumeOutput").textContent = "ERROR: Cannot connect to backend.";
+    }
+}
+
+function drawChart(id, labels, values, title){
+    const ctx = document.getElementById(id);
+    new Chart(ctx,{
+        type:"bar",
+        data:{
+            labels:labels,
+            datasets:[{label:title, data:values, backgroundColor: 'rgba(54, 162, 235, 0.6)'}]
+        },
+        options:{ responsive:true, plugins:{ legend:{ display:true } } }
+    });
+}
+</script>
+</body>
+</html>
+
+
+
