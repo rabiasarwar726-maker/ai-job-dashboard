@@ -15,7 +15,7 @@ Resume Matching: Upload a resume and match top 5 jobs from the dataset using AI 
 Interactive Charts: Visualize job categories and recommended roles dynamically with Chart.js.
 
 Deployment Ready: Can be deployed as a web application with a public link.
-https://ai-job-dashboard-nsef.onrender.com
+https://genuine-macaron-0024a6.netlify.app/
 
 Tech Stack
 
