@@ -11,7 +11,8 @@ app = FastAPI(title="AI Job Dashboard")
 # ---------------- CORS ----------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["allow_origins=["https://genuine-macaron-0024a6.netlify.app"]
+"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -159,6 +160,7 @@ async def match_resume(resume: UploadFile = File(...), jobs: UploadFile = File(.
     return {
         "top_matches": top_jobs.to_dict(orient="records")
     }
+
 
 
 
